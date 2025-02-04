@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import io from "socket.io-client";
-const BASEURL = import.meta.env.MODE==="development" ? "http://localhost:5001":"/api";
+const BASEURL = import.meta.env.MODE==="development" ? "http://localhost:5001":"https://chatapp-27oe.onrender.com/";
 
 export const useAuth = create((set, get) => ({
   authUser: null,
@@ -76,20 +76,23 @@ export const useAuth = create((set, get) => ({
       set({ isUpdatingProfile: false });
     }
   },
+  
   connectSocket: () => {
     const { authUser } = get();
     if (!authUser || get().socket?.connected) return;
-    const socket = io(BASEURL,{
-      query:{
-      userId:authUser._id,
-      },
-    });
+    const socket = io(BASEURL, {
+      query: { userId: authUser._id },
+      transports: ["websocket", "polling"],
+      withCredentials: true,
+  });
     socket.connect();
     set({ socket:socket });
     socket.on("user-sockets",(data)=>{
       set({onlineUsers:data});
     });
   },
+
+
   disconnectSocket: () => {
     if(get().socket?.connected) get().socket.disconnect();
   },
